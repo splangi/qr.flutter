@@ -12,22 +12,22 @@ import 'package:qr/qr.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 void main() {
-  testWidgets('QrImage generates correct image', (tester) async {
+    testWidgets('QrImage generates correct image', (tester) async {
     final qrImage = MaterialApp(
       home: Center(
         child: RepaintBoundary(
-          child: QrImage(
-            data: 'This is a test image',
-            version: QrVersions.auto,
+          child: QrWidget(
+            qr: QrCode.fromData(
+                data: "This is a test image",
+                errorCorrectLevel: QrErrorCorrectLevel.L),
             gapless: true,
-            errorCorrectionLevel: QrErrorCorrectLevel.L,
           ),
         ),
       ),
     );
     await tester.pumpWidget(qrImage);
     await expectLater(
-      find.byType(QrImage),
+      find.byType(QrWidget),
       matchesGoldenFile('./.golden/qr_image_golden.png'),
     );
   });
@@ -36,11 +36,11 @@ void main() {
     final qrImage = MaterialApp(
       home: Center(
         child: RepaintBoundary(
-          child: QrImage(
-            data: 'This is a test image',
-            version: QrVersions.auto,
+          child: QrWidget(
+            qr: QrCode.fromData(
+                data: 'This is a test image',
+                errorCorrectLevel: QrErrorCorrectLevel.L),
             gapless: true,
-            errorCorrectionLevel: QrErrorCorrectLevel.L,
             eyeStyle: const QrEyeStyle(
               eyeShape: QrEyeShape.circle,
               color: Colors.green,
@@ -51,7 +51,7 @@ void main() {
     );
     await tester.pumpWidget(qrImage);
     await expectLater(
-      find.byType(QrImage),
+      find.byType(QrWidget),
       matchesGoldenFile('./.golden/qr_image_eye_styled_golden.png'),
     );
   });
@@ -61,11 +61,11 @@ void main() {
     final qrImage = MaterialApp(
       home: Center(
         child: RepaintBoundary(
-          child: QrImage(
-            data: 'This is a test image',
-            version: QrVersions.auto,
+          child: QrWidget(
+            qr: QrCode.fromData(
+                data: 'This is a test image',
+                errorCorrectLevel: QrErrorCorrectLevel.L),
             gapless: true,
-            errorCorrectionLevel: QrErrorCorrectLevel.L,
             dataModuleStyle: const QrDataModuleStyle(
               dataModuleShape: QrDataModuleShape.circle,
               color: Colors.blue,
@@ -76,7 +76,7 @@ void main() {
     );
     await tester.pumpWidget(qrImage);
     await expectLater(
-      find.byType(QrImage),
+      find.byType(QrWidget),
       matchesGoldenFile('./.golden/qr_image_data_module_styled_golden.png'),
     );
   });
@@ -86,11 +86,11 @@ void main() {
     final qrImage = MaterialApp(
       home: Center(
         child: RepaintBoundary(
-          child: QrImage(
-            data: 'This is a test image',
-            version: QrVersions.auto,
+          child: QrWidget(
+            qr: QrCode.fromData(
+                data: 'This is a test image',
+                errorCorrectLevel: QrErrorCorrectLevel.L),
             gapless: true,
-            errorCorrectionLevel: QrErrorCorrectLevel.L,
             eyeStyle: const QrEyeStyle(
               eyeShape: QrEyeShape.circle,
               color: Colors.green,
@@ -105,7 +105,7 @@ void main() {
     );
     await tester.pumpWidget(qrImage);
     await expectLater(
-      find.byType(QrImage),
+      find.byType(QrWidget),
       matchesGoldenFile('./.golden/qr_image_eye_data_module_styled_golden.png'),
     );
   });
@@ -116,12 +116,12 @@ void main() {
     final qrImage = MaterialApp(
       home: Center(
         child: RepaintBoundary(
-          child: QrImage(
-            data: 'This is a test image',
-            version: QrVersions.auto,
+          child: QrWidget(
+            qr: QrCode.fromData(
+                data: 'This is a test image',
+                errorCorrectLevel: QrErrorCorrectLevel.L),
             gapless: true,
             foregroundColor: Colors.red,
-            errorCorrectionLevel: QrErrorCorrectLevel.L,
             eyeStyle: const QrEyeStyle(
               eyeShape: QrEyeShape.circle,
               color: Colors.green,
@@ -136,7 +136,7 @@ void main() {
     );
     await tester.pumpWidget(qrImage);
     await expectLater(
-      find.byType(QrImage),
+      find.byType(QrWidget),
       matchesGoldenFile('./.golden/qr_image_foreground_colored_golden.png'),
     );
   });
@@ -147,11 +147,11 @@ void main() {
       MaterialApp(
         home: Center(
           child: RepaintBoundary(
-            child: QrImage(
-              data: 'This is a a qr code with a logo',
-              version: QrVersions.auto,
+            child: QrWidget(
+              qr: QrCode.fromData(
+                  data: 'This is a a qr code with a logo',
+                  errorCorrectLevel: QrErrorCorrectLevel.L),
               gapless: true,
-              errorCorrectionLevel: QrErrorCorrectLevel.L,
               embeddedImage: FileImage(File('test/.images/logo_yakka.png')),
             ),
           ),
@@ -163,7 +163,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await expectLater(
-      find.byType(QrImage),
+      find.byType(QrWidget),
       matchesGoldenFile('./.golden/qr_image_logo_golden.png'),
     );
   });

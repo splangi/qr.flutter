@@ -13,10 +13,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 void main() {
   testWidgets('QrPainter generates correct image', (tester) async {
     final painter = QrPainter(
-      data: 'The painter is this thing',
-      version: QrVersions.auto,
+      qr: QrImage(QrCode.fromData(
+          data: 'The painter is this thing',
+          errorCorrectLevel: QrErrorCorrectLevel.L)),
       gapless: true,
-      errorCorrectionLevel: QrErrorCorrectLevel.L,
     );
     ByteData? imageData;
     await tester.runAsync(() async {

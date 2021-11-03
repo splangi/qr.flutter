@@ -14,23 +14,19 @@ import 'package:qr/qr.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'qr_painter.dart';
-import 'qr_versions.dart';
 import 'types.dart';
-import 'validator.dart';
 
 /// A widget that shows a QR code.
-class QrImage extends StatefulWidget {
+class QrWidget extends StatefulWidget {
   /// Create a new QR code using the [String] data and the passed options (or
   /// using the default options).
-  QrImage({
-    required String data,
+  QrWidget({
+    required this.qr,
     Key? key,
     this.size,
     this.padding = const EdgeInsets.all(10.0),
     this.backgroundColor = Colors.transparent,
     this.foregroundColor,
-    this.version = QrVersions.auto,
-    this.errorCorrectionLevel = QrErrorCorrectLevel.L,
     this.errorStateBuilder,
     this.constrainErrorBounds = true,
     this.gapless = true,
@@ -46,46 +42,14 @@ class QrImage extends StatefulWidget {
       color: Colors.black,
     ),
     this.embeddedImageEmitsError = false,
-  })  : assert(QrVersions.isSupportedVersion(version)),
-        _data = data,
-        _qrCode = null,
-        super(key: key);
+  })
+    :    super(key: key);
 
   /// Create a new QR code using the [QrCode] data and the passed options (or
   /// using the default options).
-  QrImage.withQr({
-    required QrCode qr,
-    Key? key,
-    this.size,
-    this.padding = const EdgeInsets.all(10.0),
-    this.backgroundColor = Colors.transparent,
-    this.foregroundColor,
-    this.version = QrVersions.auto,
-    this.errorCorrectionLevel = QrErrorCorrectLevel.L,
-    this.errorStateBuilder,
-    this.constrainErrorBounds = true,
-    this.gapless = true,
-    this.embeddedImage,
-    this.embeddedImageStyle,
-    this.semanticsLabel = 'qr code',
-    this.eyeStyle = const QrEyeStyle(
-      eyeShape: QrEyeShape.square,
-      color: Colors.black,
-    ),
-    this.dataModuleStyle = const QrDataModuleStyle(
-      dataModuleShape: QrDataModuleShape.square,
-      color: Colors.black,
-    ),
-    this.embeddedImageEmitsError = false,
-  })  : assert(QrVersions.isSupportedVersion(version)),
-        _data = null,
-        _qrCode = qr,
-        super(key: key);
 
-  // The data passed to the widget
-  final String? _data;
   // The QR code data passed to the widget
-  final QrCode? _qrCode;
+  final QrCode qr;
 
   /// The background color of the final QR code widget.
   final Color backgroundColor;
@@ -94,11 +58,7 @@ class QrImage extends StatefulWidget {
   @Deprecated('use colors in eyeStyle and dataModuleStyle instead')
   final Color? foregroundColor;
 
-  /// The QR code version to use.
-  final int version;
-
   /// The QR code error correction level to use.
-  final int errorCorrectionLevel;
 
   /// The external padding between the edge of the widget and the content.
   final EdgeInsets padding;
@@ -149,39 +109,24 @@ class QrImage extends StatefulWidget {
   final QrDataModuleStyle dataModuleStyle;
 
   @override
-  _QrImageState createState() => _QrImageState();
+  _QrWidgetState createState() => _QrWidgetState();
 }
 
-class _QrImageState extends State<QrImage> {
+class _QrWidgetState extends State<QrWidget> {
   /// The QR code string data.
-  QrCode? _qr;
+  late QrImage _qr;
 
-  /// The current validation status.
-  late QrValidationResult _validationResult;
+  @override
+  void initState() {
+    super.initState();
+    _qr = QrImage(widget.qr);
+
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (widget._data != null) {
-      _validationResult = QrValidator.validate(
-        data: widget._data!,
-        version: widget.version,
-        errorCorrectionLevel: widget.errorCorrectionLevel,
-      );
-      if (_validationResult.isValid) {
-        _qr = _validationResult.qrCode;
-      } else {
-        _qr = null;
-      }
-    } else if (widget._qrCode != null) {
-      _qr = widget._qrCode;
-      _validationResult =
-          QrValidationResult(status: QrValidationStatus.valid, qrCode: _qr);
-    }
     return LayoutBuilder(builder: (context, constraints) {
       // validation failed, show an error state widget if builder is present.
-      if (!_validationResult.isValid) {
-        return _errorWidget(context, constraints, _validationResult.error);
-      }
       // no error, build the regular widget
       final widgetSize = widget.size ?? constraints.biggest.shortestSide;
       if (widget.embeddedImage != null) {
@@ -214,8 +159,8 @@ class _QrImageState extends State<QrImage> {
   }
 
   Widget _qrWidget(BuildContext context, ui.Image? image, double edgeLength) {
-    final painter = QrPainter.withQr(
-      qr: _qr!,
+    final painter = QrPainter(
+      qr: _qr,
       color: widget.foregroundColor,
       gapless: widget.gapless,
       embeddedImageStyle: widget.embeddedImageStyle,

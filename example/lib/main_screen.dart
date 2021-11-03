@@ -34,8 +34,8 @@ class _MainScreenState extends State<MainScreen> {
         return CustomPaint(
           size: Size.square(size),
           painter: QrPainter(
-            data: message,
-            version: QrVersions.auto,
+            qr: QrImage(QrCode.fromData(
+                data: message, errorCorrectLevel: QrErrorCorrectLevel.L)),
             eyeStyle: const QrEyeStyle(
               eyeShape: QrEyeShape.square,
               color: Color(0xff128760),

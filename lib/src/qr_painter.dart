@@ -12,11 +12,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:qr/qr.dart';
 
-import 'errors.dart';
 import 'paint_cache.dart';
-import 'qr_versions.dart';
 import 'types.dart';
-import 'validator.dart';
 
 // ignore_for_file: deprecated_member_use_from_same_package
 
@@ -27,33 +24,13 @@ const Color? _qrDefaultColor = null;
 
 /// A [CustomPainter] object that you can use to paint a QR code.
 class QrPainter extends CustomPainter {
-  /// Create a new QRPainter with passed options (or defaults).
-  QrPainter({
-    required String data,
-    required this.version,
-    this.errorCorrectionLevel = QrErrorCorrectLevel.L,
-    this.color = _qrDefaultColor,
-    this.emptyColor,
-    this.gapless = false,
-    this.embeddedImage,
-    this.embeddedImageStyle,
-    this.eyeStyle = const QrEyeStyle(
-      eyeShape: QrEyeShape.square,
-      color: Color(0xFF000000),
-    ),
-    this.dataModuleStyle = const QrDataModuleStyle(
-      dataModuleShape: QrDataModuleShape.square,
-      color: Color(0xFF000000),
-    ),
-  }) : assert(QrVersions.isSupportedVersion(version)) {
-    _init(data);
-  }
+
 
   /// Create a new QrPainter with a pre-validated/created [QrCode] object. This
   /// constructor is useful when you have a custom validation / error handling
   /// flow or for when you need to pre-validate the QR data.
-  QrPainter.withQr({
-    required QrCode qr,
+  QrPainter({
+    required this.qr,
     this.color = _qrDefaultColor,
     this.emptyColor,
     this.gapless = false,
@@ -67,18 +44,13 @@ class QrPainter extends CustomPainter {
       dataModuleShape: QrDataModuleShape.square,
       color: Color(0xFF000000),
     ),
-  })  : _qr = qr,
-        version = qr.typeNumber,
-        errorCorrectionLevel = qr.errorCorrectLevel {
-    _calcVersion = version;
+  })
+        {
     _initPaints();
   }
 
-  /// The QR code version.
-  final int version; // the qr code version
 
-  /// The error correction level of the QR code.
-  final int errorCorrectionLevel; // the qr code error correction level
+
 
   /// The color of the squares.
   @Deprecated('use colors in eyeStyle and dataModuleStyle instead')
@@ -106,35 +78,13 @@ class QrPainter extends CustomPainter {
   final QrDataModuleStyle dataModuleStyle;
 
   /// The base QR code data
-  QrCode? _qr;
-
-  /// This is the version (after calculating) that we will use if the user has
-  /// requested the 'auto' version.
-  late final int _calcVersion;
+  QrImage qr;
 
   /// The size of the 'gap' between the pixels
   final double _gapSize = 0.25;
 
   /// Cache for all of the [Paint] objects.
   final _paintCache = PaintCache();
-
-  void _init(String data) {
-    if (!QrVersions.isSupportedVersion(version)) {
-      throw QrUnsupportedVersionException(version);
-    }
-    // configure and make the QR code data
-    final validationResult = QrValidator.validate(
-      data: data,
-      version: version,
-      errorCorrectionLevel: errorCorrectionLevel,
-    );
-    if (!validationResult.isValid) {
-      throw validationResult.error!;
-    }
-    _qr = validationResult.qrCode;
-    _calcVersion = _qr!.typeNumber;
-    _initPaints();
-  }
 
   void _initPaints() {
     // Cache the pixel paint object. For now there is only one but we might
@@ -171,7 +121,7 @@ class QrPainter extends CustomPainter {
 
     final paintMetrics = _PaintMetrics(
       containerSize: size.shortestSide,
-      moduleCount: _qr!.moduleCount,
+      moduleCount: qr.moduleCount,
       gapSize: (gapless ? 0 : _gapSize),
     );
 
@@ -206,21 +156,21 @@ class QrPainter extends CustomPainter {
       emptyPixelPaint = _paintCache.firstPaint(QrCodeElement.codePixelEmpty);
       emptyPixelPaint!.color = emptyColor!;
     }
-    for (var x = 0; x < _qr!.moduleCount; x++) {
-      for (var y = 0; y < _qr!.moduleCount; y++) {
+    for (var x = 0; x < qr.moduleCount; x++) {
+      for (var y = 0; y < qr.moduleCount; y++) {
         // draw the finder patterns independently
         if (_isFinderPatternPosition(x, y)) continue;
-        final paint = _qr!.isDark(y, x) ? pixelPaint : emptyPixelPaint;
+        final paint = qr.isDark(y, x) ? pixelPaint : emptyPixelPaint;
         if (paint == null) continue;
         // paint a pixel
         left = paintMetrics.inset + (x * (paintMetrics.pixelSize + gap));
         top = paintMetrics.inset + (y * (paintMetrics.pixelSize + gap));
         var pixelHTweak = 0.0;
         var pixelVTweak = 0.0;
-        if (gapless && _hasAdjacentHorizontalPixel(x, y, _qr!.moduleCount)) {
+        if (gapless && _hasAdjacentHorizontalPixel(x, y, qr.moduleCount)) {
           pixelHTweak = 0.5;
         }
-        if (gapless && _hasAdjacentVerticalPixel(x, y, _qr!.moduleCount)) {
+        if (gapless && _hasAdjacentVerticalPixel(x, y, qr.moduleCount)) {
           pixelVTweak = 0.5;
         }
         final squareRect = Rect.fromLTWH(
@@ -258,19 +208,19 @@ class QrPainter extends CustomPainter {
 
   bool _hasAdjacentVerticalPixel(int x, int y, int moduleCount) {
     if (y + 1 >= moduleCount) return false;
-    return _qr!.isDark(y + 1, x);
+    return qr.isDark(y + 1, x);
   }
 
   bool _hasAdjacentHorizontalPixel(int x, int y, int moduleCount) {
     if (x + 1 >= moduleCount) return false;
-    return _qr!.isDark(y, x + 1);
+    return qr.isDark(y, x + 1);
   }
 
   bool _isFinderPatternPosition(int x, int y) {
     final isTopLeft = (y < _finderPatternLimit && x < _finderPatternLimit);
     final isBottomLeft = (y < _finderPatternLimit &&
-        (x >= _qr!.moduleCount - _finderPatternLimit));
-    final isTopRight = (y >= _qr!.moduleCount - _finderPatternLimit &&
+        (x >= qr.moduleCount - _finderPatternLimit));
+    final isTopRight = (y >= qr.moduleCount - _finderPatternLimit &&
         (x < _finderPatternLimit));
     return isTopLeft || isBottomLeft || isTopRight;
   }
@@ -387,9 +337,8 @@ class QrPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldPainter) {
     if (oldPainter is QrPainter) {
-      return errorCorrectionLevel != oldPainter.errorCorrectionLevel ||
-          _calcVersion != oldPainter._calcVersion ||
-          _qr != oldPainter._qr ||
+      return
+          qr != oldPainter.qr ||
           gapless != oldPainter.gapless ||
           embeddedImage != oldPainter.embeddedImage ||
           embeddedImageStyle != oldPainter.embeddedImageStyle ||
@@ -445,7 +394,7 @@ class _PaintMetrics {
   void _calculateMetrics() {
     final gapTotal = (moduleCount - 1) * gapSize;
     var pixelSize = (containerSize - gapTotal) / moduleCount;
-    _pixelSize = (pixelSize * 2).roundToDouble() / 2;
+    _pixelSize = pixelSize;
     _innerContentSize = (_pixelSize * moduleCount) + gapTotal;
     _inset = (containerSize - _innerContentSize) / 2;
   }
